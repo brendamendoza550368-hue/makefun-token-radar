@@ -286,7 +286,7 @@
       fmtUsd(r.tvl_usd) + ' × ' + fmtMult(r.category_multiple) + ' × ' +
       r.growth_multiplier.toFixed(2) + '× × ' + r.maturity_multiplier.toFixed(2) + '× = ' + fmtUsd(r.implied_value_usd));
     model.appendChild(eq);
-    model.appendChild(bar('Category multiple (' + (r.multiple_peers > 0 ? 'median of ' + r.multiple_peers + ' traded ' + (r.category || '') + ' peers' : 'universe fallback') + ')', fmtMult(r.category_multiple), r.category_multiple / 3));
+    model.appendChild(bar('Category multiple (' + (r.multiple_calibrated ? 'median of ' + r.multiple_peers + ' traded ' + (r.category || '') + ' peers' : 'universe median — only ' + r.multiple_peers + ' traded peers in this category') + ')', fmtMult(r.category_multiple), r.category_multiple / 3));
     model.appendChild(bar('Growth multiplier (7d change ' + fmtPct(r.change_7d) + ')', r.growth_multiplier.toFixed(2) + '×', (r.growth_multiplier - 0.7) / 0.9));
     model.appendChild(bar('Maturity multiplier (age ' + fmtAge(r.age_days) + ')', r.maturity_multiplier.toFixed(2) + '×', r.maturity_multiplier - 0.6));
     model.appendChild(el('p', 'note', 'The multiple is the median market-cap / TVL ratio of the snapshot\u2019s own traded protocols in this category, clamped to [0.05×, 3×]. It is a comparables figure, not a forecast.'));

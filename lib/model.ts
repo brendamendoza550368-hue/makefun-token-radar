@@ -89,6 +89,7 @@ export interface BoardRow {
   model: {
     category_multiple: number;
     multiple_peers: number;
+    multiple_calibrated: boolean;
     growth_pct: number;
     growth_multiplier: number;
     maturity_multiplier: number;
@@ -112,6 +113,7 @@ export interface RadarRow {
   implied_value_usd: number;
   category_multiple: number;
   multiple_peers: number;
+  multiple_calibrated: boolean;
   growth_multiplier: number;
   maturity_multiplier: number;
   watchlist: boolean;
@@ -216,10 +218,10 @@ export function calibrate(snapshot: Snapshot): Calibration {
 }
 
 /** The multiple one protocol is scored with, and the peer sample behind it. */
-function multipleFor(calibration: Calibration, p: SnapshotProtocol): { multiple: number; peers: number } {
+function multipleFor(calibration: Calibration, p: SnapshotProtocol): { multiple: number; peers: number; calibrated: boolean } {
   const entry = calibration.byCategory.get(p.category ?? 'Uncategorized');
-  if (entry === undefined) return { multiple: calibration.fallback, peers: 0 };
-  return { multiple: entry.multiple, peers: entry.peers };
+  if (entry === undefined) return { multiple: calibration.fallback, peers: 0, calibrated: false };
+  return { multiple: entry.multiple, peers: entry.peers, calibrated: entry.calibrated };
 }
 
 /** The multipliers and the implied value one protocol gets under the calibration. */
@@ -227,15 +229,15 @@ export function impliedValue(
   protocol: SnapshotProtocol,
   asOf: string,
   calibration: Calibration,
-): { implied: number; multiple: number; peers: number; growthPct: number; growthMult: number; maturityMult: number; age: number | null } {
+): { implied: number; multiple: number; peers: number; calibrated: boolean; growthPct: number; growthMult: number; maturityMult: number; age: number | null } {
   const age = ageDays(asOf, protocol.listed_at);
-  const { multiple, peers } = multipleFor(calibration, protocol);
+  const { multiple, peers, calibrated } = multipleFor(calibration, protocol);
   const growthPct = clamp(finite(protocol.change_7d, 0), -60, 120);
   const growthMult = 1 + (growthPct / 100) * 0.5;
   const ageForModel = age ?? 365;
   const maturityMult = 0.6 + (clamp(ageForModel, 0, 1095) / 1095) * 0.4;
   const implied = Math.max(1, Math.round(protocol.tvl_usd * multiple * growthMult * maturityMult));
-  return { implied, multiple, peers, growthPct, growthMult, maturityMult, age };
+  return { implied, multiple, peers, calibrated, growthPct, growthMult, maturityMult, age };
 }
 
 /** DefiLlama's version-marker rule: a name ending in a release is a pool of another protocol. */
@@ -303,6 +305,7 @@ export function buildBoard(snapshot: Snapshot, calibration: Calibration = calibr
     model: {
       category_multiple: round4(s.multiple),
       multiple_peers: s.peers,
+      multiple_calibrated: s.calibrated,
       growth_pct: s.growthPct,
       growth_multiplier: round4(s.growthMult),
       maturity_multiplier: round4(s.maturityMult),
@@ -513,6 +516,7 @@ export function radarRow(row: BoardRow, watchlist: Set<string>): RadarRow {
     implied_value_usd: row.implied_value_usd,
     category_multiple: row.model.category_multiple,
     multiple_peers: row.model.multiple_peers,
+    multiple_calibrated: row.model.multiple_calibrated,
     growth_multiplier: row.model.growth_multiplier,
     maturity_multiplier: row.model.maturity_multiplier,
     watchlist: watchlist.has(row.slug),
