@@ -9,10 +9,10 @@ Token Radar ranks 227 pre-token protocols by implied value (TVL × category mult
 ## Run it
 
 ```sh
-cd dashboard && python3 -m http.server 8000
+MAKEFUN_OUTPUT_DIR=out node main.ts --input /input/snapshot.json
 ```
 
-Then open http://localhost:8000 in a browser.
+This writes `board.json`, `data.js`, the dashboard and the screenshots into `out/`. Serve `out/` with any static file server and open `dashboard/` to use the board.
 
 ---
 
